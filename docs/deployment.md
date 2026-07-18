@@ -32,5 +32,10 @@ Supabase can provide hosted PostgreSQL/PostGIS. Use a backend-only pooler connec
 
 ## Public deployment status
 
-The repository is deployment-ready but was not published during reconstruction because the environment contains neither Git CLI nor an authorized hosting account/repository. Creating an external service would require new user authority and account access.
+Version 1 is deployed from the public `cko99/georisk-malaysia` repository through the `georich-ai-v1` Render Blueprint:
 
+- Application: <https://georich-ai.onrender.com>
+- API documentation: <https://georich-ai.onrender.com/docs>
+- Health check: <https://georich-ai.onrender.com/api/health>
+
+The production root page, health endpoint, GeoJSON layer, weather endpoint, proximity analysis, Satellite tiles and OpenStreetMap tiles were verified after the first deployment.

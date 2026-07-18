@@ -2,9 +2,17 @@
 
 **Open-Source Geospatial Risk Intelligence for Malaysia**
 
+[Live portfolio demo](https://georich-ai.onrender.com) · [Interactive API documentation](https://georich-ai.onrender.com/docs)
+
 GeoRich AI is a working portfolio MVP reconstructed from the existing GeoRisk Malaysia project. It combines a MapLibre GL JS dashboard, official Malaysian weather warnings, keyless coordinate weather, Malaysian place search, proximity analysis, deterministic spatial insight and a PostGIS-ready data path.
 
 The default application costs RM0 to run locally and uses no paid AI, map token or API key.
+
+## Public demo
+
+Open **<https://georich-ai.onrender.com>** to explore the deployed v1 dashboard. Search for a Malaysian place or enter coordinates such as `3.139, 101.687`, compare Satellite, Hybrid and OpenStreetMap, then run a radius-based proximity analysis.
+
+The demo runs on Render's free service. After a period without traffic, the first request can take about a minute while the service wakes up.
 
 ## What works
 
