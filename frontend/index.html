@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Open-source geospatial risk intelligence for Malaysia.">
+  <title>GeoRich AI — Malaysia Risk Intelligence</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://services.arcgisonline.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#map">Skip to map</a>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Map tools">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true">GR</div>
+        <div><strong>GeoRich AI</strong><span>Malaysia risk intelligence</span></div>
+        <button class="icon-button mobile-only" id="close-sidebar" aria-label="Close map tools"><i data-lucide="x"></i></button>
+      </div>
+
+      <section class="side-section">
+        <p class="eyebrow">Find a location</p>
+        <form id="search-form" class="search-form">
+          <label class="sr-only" for="search-input">Place or latitude, longitude</label>
+          <input id="search-input" type="search" autocomplete="off" placeholder="Place or 3.139, 101.687" maxlength="120">
+          <button type="submit" aria-label="Search"><i data-lucide="search"></i></button>
+        </form>
+        <div id="search-results" class="search-results" role="listbox" aria-live="polite"></div>
+      </section>
+
+      <section class="side-section">
+        <div class="section-heading"><p class="eyebrow">Operational layers</p><span id="layer-count">5 active</span></div>
+        <div id="layer-list" class="layer-list">
+          <label><span><i data-lucide="landmark"></i>Administrative</span><input type="checkbox" data-layer="administrative" checked></label>
+          <label><span><i data-lucide="route"></i>Major roads</span><input type="checkbox" data-layer="roads" checked></label>
+          <label><span><i data-lucide="waves"></i>Rivers</span><input type="checkbox" data-layer="rivers" checked></label>
+          <label><span><i data-lucide="cloud-rain"></i>Weather</span><input type="checkbox" data-layer="weather" checked></label>
+          <label><span><i data-lucide="triangle-alert"></i>Hazards</span><input type="checkbox" data-layer="hazards" checked></label>
+        </div>
+      </section>
+
+      <section class="side-section">
+        <label class="eyebrow" for="basemap-select">Basemap</label>
+        <select id="basemap-select">
+          <option value="satellite">Satellite</option>
+          <option value="hybrid">Hybrid</option>
+          <option value="osm">OpenStreetMap</option>
+        </select>
+      </section>
+
+      <section class="side-section legend-section">
+        <p class="eyebrow">Legend</p>
+        <div id="legend" class="legend"></div>
+      </section>
+
+      <div class="sidebar-footer">
+        <span class="status-dot" id="api-dot"></span><span id="api-status">Checking API…</span>
+        <a href="/docs" target="_blank" rel="noreferrer">API docs</a>
+      </div>
+    </aside>
+
+    <div class="scrim" id="scrim" hidden></div>
+
+    <main class="workspace">
+      <header class="topbar">
+        <button class="icon-button mobile-only" id="open-sidebar" aria-label="Open map tools"><i data-lucide="panel-left"></i></button>
+        <div>
+          <p class="eyebrow">Open-source decision support</p>
+          <h1>Malaysia risk overview</h1>
+        </div>
+        <div class="topbar-actions">
+          <span class="live-pill"><span></span>Live APIs</span>
+          <button class="analysis-toggle" id="open-analysis"><i data-lucide="scan-search"></i>Analyse</button>
+        </div>
+      </header>
+
+      <section class="kpi-grid" aria-label="Key indicators">
+        <article><span>Active layers</span><strong id="kpi-layers">5</strong><small>of 5 overlays</small></article>
+        <article><span>Current warnings</span><strong id="kpi-warnings">—</strong><small id="warnings-note">Loading official feed</small></article>
+        <article><span>Nearby hazards</span><strong id="kpi-hazards">—</strong><small>selected radius</small></article>
+        <article><span>Current rainfall</span><strong id="kpi-rain">—</strong><small id="rain-note">Select a location</small></article>
+      </section>
+
+      <section class="map-card" aria-label="Interactive risk map">
+        <div id="map" tabindex="0" aria-label="Interactive map of Malaysia"></div>
+        <div class="map-meta">
+          <span id="cursor-coordinates">Lat 3.14 · Lon 101.69</span>
+          <span id="map-message" role="status">Map data © OpenStreetMap contributors</span>
+        </div>
+        <div class="map-loading" id="map-loading">Loading spatial layers…</div>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel insight-card">
+          <div class="panel-title"><div><p class="eyebrow">Automated spatial insight</p><h2 id="insight-title">Choose a location to begin</h2></div><i data-lucide="sparkles"></i></div>
+          <p id="insight-text">Search for a Malaysian place or enter coordinates, then run a proximity check. Insights are deterministic and use no paid AI service.</p>
+          <div class="weather-strip" id="weather-strip" hidden>
+            <span><small>Temperature</small><strong id="weather-temp">—</strong></span>
+            <span><small>Wind</small><strong id="weather-wind">—</strong></span>
+            <span><small>Weather code</small><strong id="weather-code">—</strong></span>
+            <span><small>Observed</small><strong id="weather-time">—</strong></span>
+          </div>
+        </article>
+
+        <article class="panel chart-panel">
+          <div class="panel-title"><div><p class="eyebrow">Portfolio sample</p><h2>Hazards by state</h2></div><span class="demo-badge">DEMO</span></div>
+          <div class="chart-wrap"><canvas id="hazard-chart" aria-label="Synthetic hazards by state"></canvas></div>
+        </article>
+      </section>
+
+      <section class="panel sources-panel">
+        <div class="panel-title"><div><p class="eyebrow">Traceability</p><h2>Data sources</h2></div><span id="source-updated">Updated on request</span></div>
+        <div class="source-table" role="table" aria-label="Data source status">
+          <div role="row"><strong role="cell">data.gov.my</strong><span role="cell">Weather warnings</span><span role="cell">Official Malaysian open data</span><em role="cell" id="source-gov">Checking</em></div>
+          <div role="row"><strong role="cell">Open-Meteo</strong><span role="cell">Coordinate weather</span><span role="cell">CC BY 4.0</span><em role="cell" id="source-meteo">On demand</em></div>
+          <div role="row"><strong role="cell">OpenStreetMap</strong><span role="cell">Map + place search</span><span role="cell">ODbL 1.0</span><em role="cell">Live</em></div>
+          <div role="row"><strong role="cell">GeoRich sample</strong><span role="cell">Fallback spatial layers</span><span role="cell">Generalised / synthetic</span><em role="cell">Demo</em></div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="analysis-panel" id="analysis-panel" aria-label="Proximity analysis">
+      <div class="analysis-handle"></div>
+      <div class="analysis-header">
+        <div><p class="eyebrow">Spatial query</p><h2>Proximity analysis</h2></div>
+        <button class="icon-button" id="close-analysis" aria-label="Close analysis"><i data-lucide="x"></i></button>
+      </div>
+      <p class="analysis-location" id="analysis-location">No location selected</p>
+      <form id="analysis-form">
+        <fieldset>
+          <legend>Radius</legend>
+          <div class="segmented">
+            <label><input type="radio" name="radius" value="500"><span>500 m</span></label>
+            <label><input type="radio" name="radius" value="1000"><span>1 km</span></label>
+            <label><input type="radio" name="radius" value="3000" checked><span>3 km</span></label>
+            <label><input type="radio" name="radius" value="5000"><span>5 km</span></label>
+          </div>
+        </fieldset>
+        <label for="analysis-layer">Target layer</label>
+        <select id="analysis-layer">
+          <option value="hazards">Hazard records</option>
+          <option value="rivers">Rivers</option>
+          <option value="roads">Major roads</option>
+        </select>
+        <button class="primary-button" type="submit"><i data-lucide="radar"></i>Run analysis</button>
+      </form>
+      <div class="analysis-result" id="analysis-result" aria-live="polite">
+        <div><span>Features in radius</span><strong id="result-count">—</strong></div>
+        <div><span>Nearest feature</span><strong id="result-nearest">—</strong></div>
+        <p id="result-summary">Select a location before running analysis.</p>
+        <small>Fallback mode is a generalised portfolio sample, not an emergency or engineering decision system.</small>
+      </div>
+    </aside>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="/assets/js/app.js" defer></script>
+</body>
+</html>

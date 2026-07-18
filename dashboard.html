@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoRisk Malaysia | Spatial Intelligence Platform</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Map (Leaflet) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    
+    <style>
+        :root {
+            /* Enterprise Dark Theme Palette */
+            --bg-base: #080A0F;
+            --bg-panel: #10141D;
+            --bg-card: rgba(22, 27, 38, 0.6);
+            --bg-card-hover: rgba(30, 37, 50, 0.8);
+            
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-highlight: rgba(255, 255, 255, 0.12);
+            
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-tertiary: #64748B;
+            
+            /* Accents */
+            --accent-brand: #4F46E5; /* Indigo */
+            --status-critical: #EF4444; /* Red */
+            --status-warning: #F59E0B; /* Amber */
+            --status-safe: #10B981; /* Emerald */
+            --status-info: #3B82F6; /* Blue */
+            
+            --font-main: 'Inter', sans-serif;
+            
+            /* Sizing & Spacing */
+            --sidebar-width: 260px;
+            --header-height: 70px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            
+            /* Effects */
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --blur-glass: blur(12px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            overflow: hidden; /* Prevent body scroll, handle inside main */
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Layout Architecture */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .brand {
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            gap: 12px;
+        }
+
+        .brand-icon {
+            color: var(--accent-brand);
+            font-size: 20px;
+        }
+
+        .brand-text h1 {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-text span {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-section {
+            padding: 20px 12px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-left: 12px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-item i {
+            width: 20px;
+            font-size: 14px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background-color: rgba(79, 70, 229, 0.1);
+            color: var(--accent-brand);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+        }
+
+        .badge-soon {
+            position: absolute;
+            right: 12px;
+            font-size: 9px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 6px;
+            border-radius: 4px;
+            color: var(--text-tertiary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Main Content Area */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 0%, #151a28 0%, var(--bg-base) 100%);
+        }
+
+        /* Top Header */
+        .header {
+            height: var(--header-height);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            background: rgba(16, 20, 29, 0.8);
+            backdrop-filter: var(--blur-glass);
+            z-index: 50;
+        }
+
+        .search-bar {
+            position: relative;
+            width: 360px;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+        }
+
+        .search-bar input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-subtle);
+            padding: 10px 16px 10px 40px;
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            transition: border 0.3s;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent-brand);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .system-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--status-safe);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .system-status-indicator i {
+            font-size: 8px;
+        }
+
+        .btn-report {
+            background: var(--accent-brand);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-report:hover {
+            background: #4338ca;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 1px solid var(--border-subtle);
+            padding-left: 24px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name { font-size: 13px; font-weight: 500; }
+        .user-role { font-size: 11px; color: var(--text-tertiary); }
+
+        /* Dashboard Scroll Area */
+        .dashboard-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+        }
+        
+        /* Custom Scrollbar */
+        .dashboard-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .dashboard-content::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        .dashboard-content::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        /* KPI Row */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--blur-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            opacity: 0.5;
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .kpi-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .kpi-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .kpi-trend {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-up { color: var(--status-critical); }
+        .trend-down { color: var(--status-safe); }
+
+        /* Middle Section: Map & Side Panel */
+        .middle-grid {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+            height: 520px;
+        }
+
+        /* Glass Panel Base Class */
+        .glass-panel {
+            background: var(--bg-card);
+            backdrop-filter: var(--blur-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--status-safe);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* Map Container */
+        .map-container {
+            flex: 1;
+            position: relative;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            overflow: hidden;
+            background: #000;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Override Leaflet styles for dark mode */
+        .leaflet-control-zoom a {
+            background-color: var(--bg-panel) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-subtle) !important;
+        }
+
+        /* AI Assistant Chat */
+        .ai-chat-area {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-msg {
+            display: flex;
+            gap: 12px;
+        }
+
+        .msg-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .msg-content {
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 0 8px 8px 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .msg-content.user-msg {
+            background: rgba(79, 70, 229, 0.15);
+            color: var(--text-primary);
+            border-color: rgba(79, 70, 229, 0.3);
+            border-radius: 8px 0 8px 8px;
+        }
+
+        .chat-input {
+            padding: 16px;
+            border-top: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .chat-input input {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-subtle);
+            padding: 10px 40px 10px 16px;
+            border-radius: var(--radius-md);
+            color: white;
+            font-family: inherit;
+        }
+        
+        .chat-input button {
+            position: absolute;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--accent-brand);
+            cursor: pointer;
+        }
+
+        /* Bottom Row: Charts & Security */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            padding: 20px;
+            height: 300px;
+            position: relative;
+        }
+
+        /* Security List */
+        .security-list {
+            padding: 20px;
+            list-style: none;
+        }
+
+        .security-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .security-list li i {
+            color: var(--status-safe);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 4px;
+            border-radius: 50%;
+            font-size: 10px;
+        }
+        
+        .security-shield {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .security-shield i {
+            font-size: 48px;
+            color: rgba(16, 185, 129, 0.8);
+            filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.3));
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-layer-group brand-icon"></i>
+            <div class="brand-text">
+                <h1>GeoRisk Malaysia</h1>
+                <span>v0.1 Enterprise</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Risk Modules</div>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-house"></i> Overview
+            </a>
+            <a href="#" class="nav-item active">
+                <i class="fa-solid fa-water"></i> Flood Risk
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-mosquito"></i> Dengue
+                <span class="badge-soon">Coming Soon</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-car-burst"></i> Road Accident
+                <span class="badge-soon">Coming Soon</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-cloud-bolt"></i> Weather
+                <span class="badge-soon">Coming Soon</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Analytics & Tools</div>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-file-pdf"></i> Reports
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-robot"></i> AI Assistant
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-database"></i> Data Catalog
+            </a>
+        </div>
+        
+        <div class="nav-section" style="margin-top: auto;">
+            <div class="nav-section-title">System</div>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-server"></i> System Status
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-gear"></i> Settings
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-wrapper">
+        
+        <!-- TOP HEADER -->
+        <header class="header">
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Search location, district, or keyword...">
+            </div>
+
+            <div class="header-actions">
+                <div class="system-status-indicator">
+                    <i class="fa-solid fa-circle"></i>
+                    System Secure
+                </div>
+                
+                <i class="fa-regular fa-bell" style="color: var(--text-secondary); cursor: pointer;"></i>
+                
+                <div style="font-size: 13px; color: var(--text-secondary);">
+                    <i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> July 18, 2026
+                </div>
+
+                <button class="btn-report">
+                    <i class="fa-solid fa-download"></i> Generate Report
+                </button>
+
+                <div class="user-profile">
+                    <div class="user-info" style="text-align: right;">
+                        <span class="user-name">Luqman</span>
+                        <span class="user-role">Administrator</span>
+                    </div>
+                    <div class="avatar">L</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            
+            <!-- KPI ROW -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Flood Events (30d)</span>
+                        <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--status-info);">
+                            <i class="fa-solid fa-water"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value">128</div>
+                    <div class="kpi-trend trend-up">
+                        <i class="fa-solid fa-arrow-up"></i> 18.4% vs last month
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">High Risk Districts</span>
+                        <div class="kpi-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--status-critical);">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value">12</div>
+                    <div class="kpi-trend trend-up">
+                        <i class="fa-solid fa-arrow-up"></i> 2 new this week
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Population Exposed</span>
+                        <div class="kpi-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--status-safe);">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value">1.4M</div>
+                    <div class="kpi-trend trend-down">
+                        <i class="fa-solid fa-arrow-down"></i> 1.2% stabilized
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Active River Stations</span>
+                        <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--status-info);">
+                            <i class="fa-solid fa-tower-observation"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value">156</div>
+                    <div class="kpi-trend trend-down" style="color: var(--text-tertiary);">
+                        <i class="fa-solid fa-minus"></i> 100% Operational
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Weather Alerts</span>
+                        <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--status-warning);">
+                            <i class="fa-solid fa-cloud-showers-heavy"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value">7</div>
+                    <div class="kpi-trend trend-up">
+                        <i class="fa-solid fa-arrow-up"></i> 3 active warnings
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">API Pipeline Health</span>
+                        <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value">99.8%</div>
+                    <div class="kpi-trend trend-down">
+                        <i class="fa-solid fa-check"></i> Audit log clear
+                    </div>
+                </div>
+            </div>
+
+            <!-- MIDDLE ROW (Map & AI) -->
+            <div class="middle-grid">
+                
+                <!-- GIS MAP -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fa-regular fa-map"></i> Spatial Risk View
+                            <span class="live-badge">LIVE INGESTION</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); color: var(--text-secondary); padding: 4px 8px; border-radius: 4px; font-size: 11px;">
+                                <option>Peninsular Malaysia</option>
+                                <option>Sabah & Sarawak</option>
+                            </select>
+                            <button style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                                <i class="fa-solid fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="map-container">
+                        <div id="map"></div>
+                        <!-- Legend Overlay -->
+                        <div style="position: absolute; bottom: 20px; left: 20px; z-index: 1000; background: rgba(16, 20, 29, 0.85); backdrop-filter: blur(8px); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Risk Level</div>
+                            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: var(--text-secondary);">
+                                <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #EF4444;"></span> Very High</div>
+                                <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #F59E0B;"></span> High</div>
+                                <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #10B981;"></span> Low</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI ASSISTANT -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fa-solid fa-microchip"></i> GeoRisk AI Assistant
+                        </div>
+                        <span style="font-size: 10px; color: var(--accent-brand); border: 1px solid var(--accent-brand); padding: 2px 6px; border-radius: 4px;">BETA</span>
+                    </div>
+                    
+                    <div class="ai-chat-area">
+                        <div class="chat-msg" style="flex-direction: row-reverse;">
+                            <div class="msg-avatar" style="background: var(--bg-panel);">L</div>
+                            <div class="msg-content user-msg">
+                                Daerah manakah paling berisiko banjir dalam 30 hari terakhir?
+                            </div>
+                        </div>
+                        
+                        <div class="chat-msg">
+                            <div class="msg-avatar" style="background: rgba(79, 70, 229, 0.2); color: var(--accent-brand);"><i class="fa-solid fa-robot"></i></div>
+                            <div class="msg-content">
+                                Berdasarkan analisis reruang (spatial analysis) data 30 hari terakhir, berikut adalah 3 daerah berisiko paling tinggi:<br><br>
+                                <strong>1. Kuala Langat, Selangor</strong> (Risk Score: 92%)<br>
+                                <strong>2. Hulu Langat, Selangor</strong> (Risk Score: 87%)<br>
+                                <strong>3. Pekan, Pahang</strong> (Risk Score: 81%)<br><br>
+                                <em>Peringatan: Data yang dipaparkan adalah dirumuskan secara automatik dan hanya untuk sokongan keputusan (decision support).</em>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input">
+                        <input type="text" placeholder="Ask follow-up question...">
+                        <button><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM ROW (Charts & Security) -->
+            <div class="bottom-grid">
+                
+                <!-- Chart 1: Trend -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Flood Trend (Last 6 Months)</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: District Ranking -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">District Risk Ranking</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="rankChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Enterprise Security Card -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fa-solid fa-shield-halved"></i> Security Overview
+                        </div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="security-shield">
+                            <i class="fa-solid fa-shield-check"></i>
+                        </div>
+                        <ul class="security-list">
+                            <li><i class="fa-solid fa-check"></i> <span>HTTPS Enabled (TLS 1.3)</span></li>
+                            <li><i class="fa-solid fa-check"></i> <span>Database Protected & Isolated</span></li>
+                            <li><i class="fa-solid fa-check"></i> <span>Read-only Public Data Ingestion</span></li>
+                            <li><i class="fa-solid fa-check"></i> <span>Audit Logging Enabled</span></li>
+                            <li><i class="fa-solid fa-check"></i> <span>End-to-End Encryption Active</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const API_BASE_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
+    const API_ENDPOINTS = {
+        weather: `${API_BASE_URL}/api/weather`,
+        warning: `${API_BASE_URL}/api/weather/warning`,
+        earthquake: `${API_BASE_URL}/api/weather/earthquake`
+    };
+
+    // --- 1. LEAFLET MAP INITIALIZATION ---
+    const map = L.map('map', {
+        zoomControl: false,
+        attributionControl: false
+    }).setView([4.2105, 101.9758], 6);
+
+    L.control.zoom({ position: 'topleft' }).addTo(map);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd'
+    }).addTo(map);
+
+    // --- 2. CHART.JS INITIALIZATION ---
+    Chart.defaults.color = '#94A3B8';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    const commonChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.03)' } },
+            y: { grid: { color: 'rgba(255,255,255,0.03)' }, beginAtZero: true }
+        }
+    };
+
+    const ctxTrend = document.getElementById('trendChart').getContext('2d');
+    const ctxRank = document.getElementById('rankChart').getContext('2d');
+    let trendChart = new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Forecast Records',
+                    data: [],
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#080A0F',
+                    pointBorderColor: '#3B82F6',
+                    pointBorderWidth: 2
+                }
+            ]
+        },
+        options: commonChartOptions
+    });
+
+    let rankChart = new Chart(ctxRank, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [],
+                borderRadius: 4,
+                barThickness: 16
+            }]
+        },
+        options: {
+            ...commonChartOptions,
+            indexAxis: 'y',
+            scales: {
+                x: { grid: { display: false }, max: 100 },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+
+    const mapLayers = [];
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(value) {
+        if (!value) {
+            return 'N/A';
+        }
+
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return value;
+        }
+
+        return parsed.toLocaleString('en-MY', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        });
+    }
+
+    function truncateText(value, maxLength = 120) {
+        const normalized = String(value ?? '').trim();
+        if (normalized.length <= maxLength) {
+            return normalized;
+        }
+        return `${normalized.slice(0, maxLength - 1)}…`;
+    }
+
+    function shortLabel(value, maxLength = 18) {
+        return truncateText(value, maxLength);
+    }
+
+    function getStatusColor(magnitude) {
+        if (magnitude >= 6) {
+            return '#EF4444';
+        }
+        if (magnitude >= 4) {
+            return '#F59E0B';
+        }
+        return '#10B981';
+    }
+
+    function updateHeaderDate() {
+        const headerDate = document.querySelector('.header-actions div[style*="font-size: 13px"]');
+        if (!headerDate) {
+            return;
+        }
+
+        headerDate.innerHTML = `<i class="fa-regular fa-calendar" style="margin-right: 6px;"></i>${new Date().toLocaleString('en-MY', {
+            dateStyle: 'long',
+            timeStyle: 'short'
+        })}`;
+    }
+
+    function updateSystemStatus(allFeedsOnline) {
+        const indicator = document.querySelector('.system-status-indicator');
+        if (!indicator) {
+            return;
+        }
+
+        indicator.style.color = allFeedsOnline ? 'var(--status-safe)' : 'var(--status-warning)';
+        indicator.innerHTML = `<i class="fa-solid fa-circle"></i>${allFeedsOnline ? 'Live Feeds Online' : 'Feed Sync Degraded'}`;
+    }
+
+    function updateWeatherAlertCard(warnings, earthquakes) {
+        const weatherAlertCard = Array.from(document.querySelectorAll('.kpi-card')).find((card) => {
+            return card.querySelector('.kpi-title')?.textContent.trim() === 'Weather Alerts';
+        });
+
+        if (!weatherAlertCard) {
+            return;
+        }
+
+        const valueElement = weatherAlertCard.querySelector('.kpi-value');
+        const trendElement = weatherAlertCard.querySelector('.kpi-trend');
+
+        if (valueElement) {
+            valueElement.textContent = String(warnings.length);
+        }
+
+        if (trendElement) {
+            trendElement.classList.remove('trend-up', 'trend-down');
+            trendElement.style.color = warnings.length > 0 ? 'var(--status-warning)' : 'var(--status-safe)';
+            trendElement.innerHTML = warnings.length > 0
+                ? `<i class="fa-solid fa-triangle-exclamation"></i> ${earthquakes.length} earthquake records available`
+                : `<i class="fa-solid fa-check"></i> No active weather warnings`;
+        }
+    }
+
+    function updateAiAssistant(forecasts, warnings, earthquakes) {
+        const messages = document.querySelectorAll('.ai-chat-area .msg-content');
+        if (messages.length < 2) {
+            return;
+        }
+
+        const leadForecast = forecasts[0];
+        const leadWarning = warnings[0];
+        const strongestEarthquake = [...earthquakes].sort((left, right) => (Number(right.magnitude) || 0) - (Number(left.magnitude) || 0))[0];
+
+        messages[0].textContent = 'Apakah situasi cuaca dan amaran rasmi terkini?';
+        messages[1].innerHTML = [
+            leadForecast
+                ? `<strong>Forecast</strong>: ${escapeHtml(leadForecast.location_name)} dijangka ${escapeHtml(leadForecast.summary_forecast || 'tiada ringkasan')} pada ${escapeHtml(leadForecast.date || 'tarikh tidak tersedia')}.`
+                : '<strong>Forecast</strong>: Tiada data ramalan tersedia.',
+            leadWarning
+                ? `<strong>Warning</strong>: ${escapeHtml(leadWarning.heading || leadWarning.title)} sah sehingga ${escapeHtml(formatDate(leadWarning.valid_to))}.`
+                : '<strong>Warning</strong>: Tiada amaran cuaca aktif setakat ini.',
+            strongestEarthquake
+                ? `<strong>Earthquake</strong>: Magnitud ${escapeHtml(strongestEarthquake.magnitude)} direkodkan berhampiran ${escapeHtml(strongestEarthquake.location)}.`
+                : '<strong>Earthquake</strong>: Tiada rekod gempa tersedia.'
+        ].join('<br><br>');
+    }
+
+    function clearMapLayers() {
+        while (mapLayers.length > 0) {
+            const layer = mapLayers.pop();
+            map.removeLayer(layer);
+        }
+    }
+
+    function renderEarthquakeMap(earthquakes) {
+        clearMapLayers();
+
+        const visibleEarthquakes = earthquakes
+            .filter((earthquake) => Boolean(earthquake.visible))
+            .slice(0, 20);
+
+        visibleEarthquakes.forEach((earthquake) => {
+            const magnitude = Number(earthquake.magnitude) || 0;
+            const color = getStatusColor(magnitude);
+            const radius = Math.max(5000, magnitude * 3500);
+
+            const glow = L.circle([earthquake.latitude, earthquake.longitude], {
+                color,
+                fillColor: color,
+                fillOpacity: 0.12,
+                radius: radius * 2.2,
+                weight: 0
+            }).addTo(map);
+
+            const core = L.circle([earthquake.latitude, earthquake.longitude], {
+                color,
+                fillColor: color,
+                fillOpacity: 0.8,
+                radius,
+                weight: 1
+            }).addTo(map);
+
+            core.bindPopup(
+                `<div style="background:#10141D; color:#fff; border:none; line-height:1.5;">` +
+                `<b>${escapeHtml(earthquake.location)}</b><br>` +
+                `Magnitude: ${escapeHtml(earthquake.magnitude)}<br>` +
+                `Depth: ${escapeHtml(earthquake.depth_km)} km<br>` +
+                `Time: ${escapeHtml(formatDate(earthquake.local_datetime || earthquake.utc_datetime))}` +
+                `</div>`
+            );
+
+            mapLayers.push(glow, core);
+        });
+    }
+
+    function renderTrendChart(forecasts) {
+        const groupedByDate = forecasts.reduce((accumulator, forecast) => {
+            const key = forecast.date || 'Unknown';
+            accumulator[key] = (accumulator[key] || 0) + 1;
+            return accumulator;
+        }, {});
+
+        const sortedDates = Object.keys(groupedByDate).sort().slice(0, 6);
+
+        trendChart.data.labels = sortedDates.map((date) => {
+            const parsed = new Date(date);
+            return Number.isNaN(parsed.getTime())
+                ? date
+                : parsed.toLocaleDateString('en-MY', { month: 'short', day: 'numeric' });
+        });
+        trendChart.data.datasets[0].data = sortedDates.map((date) => groupedByDate[date]);
+        trendChart.update();
+    }
+
+    function renderRankChart(earthquakes) {
+        const strongestEarthquakes = [...earthquakes]
+            .sort((left, right) => (Number(right.magnitude) || 0) - (Number(left.magnitude) || 0))
+            .slice(0, 5);
+
+        rankChart.data.labels = strongestEarthquakes.map((earthquake) => shortLabel(earthquake.location));
+        rankChart.data.datasets[0].data = strongestEarthquakes.map((earthquake) => Number(earthquake.magnitude) || 0);
+        rankChart.data.datasets[0].backgroundColor = strongestEarthquakes.map((earthquake) => {
+            return getStatusColor(Number(earthquake.magnitude) || 0);
+        });
+        rankChart.options.scales.x.max = Math.max(7, ...rankChart.data.datasets[0].data, 1);
+        rankChart.update();
+    }
+
+    function ensureLiveFeedGrid() {
+        let grid = document.getElementById('live-feed-grid');
+        if (grid) {
+            applyLiveFeedGridLayout(grid);
+            return grid;
+        }
+
+        grid = document.createElement('div');
+        grid.id = 'live-feed-grid';
+        grid.className = 'bottom-grid';
+        grid.style.alignItems = 'start';
+        applyLiveFeedGridLayout(grid);
+
+        [
+            { key: 'weather', title: 'Weather Forecast' },
+            { key: 'warning', title: 'Weather Warning' },
+            { key: 'earthquake', title: 'Earthquake Warning' }
+        ].forEach((section) => {
+            const panel = document.createElement('div');
+            panel.className = 'glass-panel';
+
+            const header = document.createElement('div');
+            header.className = 'panel-header';
+            header.innerHTML = `<div class="panel-title">${section.title}</div>`;
+
+            const body = document.createElement('div');
+            body.id = `live-${section.key}-body`;
+            body.style.padding = '16px 20px';
+            body.style.display = 'flex';
+            body.style.flexDirection = 'column';
+            body.style.gap = '12px';
+            body.style.maxHeight = '360px';
+            body.style.overflowY = 'auto';
+            body.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px;">Loading live data...</div>';
+
+            panel.appendChild(header);
+            panel.appendChild(body);
+            grid.appendChild(panel);
+        });
+
+        document.querySelector('.dashboard-content')?.appendChild(grid);
+        return grid;
+    }
+
+    function applyLiveFeedGridLayout(grid) {
+        if (!grid) {
+            return;
+        }
+
+        if (window.innerWidth < 1200) {
+            grid.style.gridTemplateColumns = '1fr';
+            return;
+        }
+
+        if (window.innerWidth < 1680) {
+            grid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+            return;
+        }
+
+        grid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+    }
+
+    function renderPanelList(containerId, items, renderer, emptyMessage) {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+
+        if (!items.length) {
+            const emptyState = document.createElement('div');
+            emptyState.style.color = 'var(--text-secondary)';
+            emptyState.style.fontSize = '13px';
+            emptyState.textContent = emptyMessage;
+            container.appendChild(emptyState);
+            return;
+        }
+
+        items.forEach((item) => container.appendChild(renderer(item)));
+    }
+
+    function createPanelCard(title, subtitle, description) {
+        const card = document.createElement('div');
+        card.style.border = '1px solid var(--border-subtle)';
+        card.style.borderRadius = '12px';
+        card.style.background = 'rgba(0, 0, 0, 0.18)';
+        card.style.padding = '14px';
+
+        const titleElement = document.createElement('div');
+        titleElement.style.fontSize = '13px';
+        titleElement.style.fontWeight = '600';
+        titleElement.style.marginBottom = '6px';
+        titleElement.textContent = title;
+
+        const subtitleElement = document.createElement('div');
+        subtitleElement.style.fontSize = '11px';
+        subtitleElement.style.color = 'var(--text-tertiary)';
+        subtitleElement.style.marginBottom = '8px';
+        subtitleElement.textContent = subtitle;
+
+        const descriptionElement = document.createElement('div');
+        descriptionElement.style.fontSize = '12px';
+        descriptionElement.style.color = 'var(--text-secondary)';
+        descriptionElement.style.lineHeight = '1.5';
+        descriptionElement.textContent = description;
+
+        card.append(titleElement, subtitleElement, descriptionElement);
+        return card;
+    }
+
+    function renderWeatherPanel(forecasts) {
+        renderPanelList(
+            'live-weather-body',
+            forecasts.slice(0, 6),
+            (forecast) => createPanelCard(
+                `${forecast.location_name || 'Unknown location'}${forecast.max_temp ? ` • ${forecast.max_temp}°C` : ''}`,
+                `${forecast.date || 'Date unavailable'}${forecast.summary_when ? ` • ${forecast.summary_when}` : ''}`,
+                forecast.summary_forecast || forecast.morning_forecast || 'No summary available'
+            ),
+            'No weather forecast records available.'
+        );
+    }
+
+    function renderWarningPanel(warnings) {
+        renderPanelList(
+            'live-warning-body',
+            warnings.slice(0, 6),
+            (warning) => createPanelCard(
+                warning.heading || warning.title || 'Active Weather Warning',
+                `Valid until ${formatDate(warning.valid_to)}`,
+                truncateText(warning.description || 'No warning details available.', 180)
+            ),
+            'No active weather warnings.'
+        );
+    }
+
+    function renderEarthquakePanel(earthquakes) {
+        renderPanelList(
+            'live-earthquake-body',
+            earthquakes.slice(0, 6),
+            (earthquake) => createPanelCard(
+                `${earthquake.location || 'Unknown location'}${earthquake.magnitude ? ` • M${earthquake.magnitude}` : ''}`,
+                formatDate(earthquake.local_datetime || earthquake.utc_datetime),
+                `${earthquake.distance_malaysia || 'Distance unavailable'}${earthquake.depth_km ? ` • Depth ${earthquake.depth_km} km` : ''}`
+            ),
+            'No earthquake records available.'
+        );
+    }
+
+    async function fetchBackendFeed(url) {
+        const response = await fetch(url, {
+            headers: { 'Accept': 'application/json' }
+        });
+
+        let payload = null;
+        try {
+            payload = await response.json();
+        } catch (error) {
+            throw new Error('Invalid response from backend');
+        }
+
+        if (!response.ok || !payload?.success) {
+            throw new Error(payload?.message || 'Backend request failed');
+        }
+
+        return payload.data;
+    }
+
+    function renderPanelError(containerId, message) {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+        const errorState = document.createElement('div');
+        errorState.style.color = 'var(--status-warning)';
+        errorState.style.fontSize = '13px';
+        errorState.style.lineHeight = '1.5';
+        errorState.textContent = message;
+        container.appendChild(errorState);
+    }
+
+    async function initializeDashboard() {
+        const liveFeedGrid = ensureLiveFeedGrid();
+        updateHeaderDate();
+        window.addEventListener('resize', () => applyLiveFeedGridLayout(liveFeedGrid));
+
+        const [weatherResult, warningResult, earthquakeResult] = await Promise.allSettled([
+            fetchBackendFeed(API_ENDPOINTS.weather),
+            fetchBackendFeed(API_ENDPOINTS.warning),
+            fetchBackendFeed(API_ENDPOINTS.earthquake)
+        ]);
+
+        const forecasts = weatherResult.status === 'fulfilled' ? weatherResult.value : [];
+        const warnings = warningResult.status === 'fulfilled' ? warningResult.value : [];
+        const earthquakes = earthquakeResult.status === 'fulfilled' ? earthquakeResult.value : [];
+
+        if (weatherResult.status === 'fulfilled') {
+            renderWeatherPanel(forecasts);
+            renderTrendChart(forecasts);
+        } else {
+            renderPanelError('live-weather-body', weatherResult.reason?.message || 'Weather feed unavailable.');
+        }
+
+        if (warningResult.status === 'fulfilled') {
+            renderWarningPanel(warnings);
+        } else {
+            renderPanelError('live-warning-body', warningResult.reason?.message || 'Warning feed unavailable.');
+        }
+
+        if (earthquakeResult.status === 'fulfilled') {
+            renderEarthquakePanel(earthquakes);
+            renderEarthquakeMap(earthquakes);
+            renderRankChart(earthquakes);
+        } else {
+            renderPanelError('live-earthquake-body', earthquakeResult.reason?.message || 'Earthquake feed unavailable.');
+        }
+
+        updateWeatherAlertCard(warnings, earthquakes);
+        updateAiAssistant(forecasts, warnings, earthquakes);
+        updateSystemStatus(
+            weatherResult.status === 'fulfilled'
+            && warningResult.status === 'fulfilled'
+            && earthquakeResult.status === 'fulfilled'
+        );
+    }
+
+    initializeDashboard();
+
+</script>
+</body>
+</html>

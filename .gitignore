@@ -1,0 +1,41 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Local archives, installers and superseded prototypes
+GeoRisk-Malaysia/
+sprint-01-dashboard/
+archives/
+*.zip
+*.exe
+*.winmd
+gemini-code-*.html

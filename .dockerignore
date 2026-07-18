@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.git/
+.env
+logs/
+archives/
+GeoRisk-Malaysia/
+sprint-01-dashboard/
+*.zip
+*.exe
+*.winmd
+gemini-code-*.html
+
